@@ -154,7 +154,22 @@ def train_with_adamw(
     lr: float = 5e-4,
     weight_decay: float = 5e-2
 ) -> Dict[str, List[float]]:
-    """Train model with standard AdamW (no SIGReg loss)."""
+    """
+    Baseline training with standard AdamW and MSE regularization.
+    
+    Uses Mean Squared Error (MSE) to 0 as a simple regularization baseline.
+    This penalizes large embedding magnitudes, encouraging the model to produce
+    embeddings close to zero. While this differs from statistical normality tests
+    (which assess distribution shape), it provides a computationally cheap baseline
+    for comparison against LeJEPA's SIGReg approach.
+    
+    Note: MSE regularization does not assess multivariate normality - it only
+    penalizes embedding magnitude. This makes it a weak baseline compared to
+    statistical tests, but useful for demonstrating the value of SIGReg.
+    
+    The provided `test` is used only for evaluation (with torch.no_grad()), not
+    as the training loss. This allows fair comparison: AdamW+MSE vs LeJEPA+SIGReg.
+    """
     
     # Create optimizer (no scheduler for fair comparison)
     optimizer = torch.optim.AdamW(
@@ -176,12 +191,12 @@ def train_with_adamw(
         optimizer.zero_grad()
         embeddings = model(batch)
         
-        # Compute loss using same test
+        # Evaluate with statistical test (evaluation only, not training loss)
         with torch.no_grad():
             loss = test(embeddings)
         
-        # For AdamW, we use MSE to 0 (simple regularization)
-        # This is NOT the same as SIGReg but provides a baseline
+        # Training loss: MSE regularization (penalize large embedding magnitudes)
+        # This differs from SIGReg which assesses distribution normality
         train_loss = embeddings.pow(2).mean()
         
         # Backward pass

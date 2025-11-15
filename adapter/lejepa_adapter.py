@@ -296,16 +296,12 @@ class LeJEPAAdapter:
         return self.optimizer.param_groups
     
     def __repr__(self) -> str:
+        """Return concise string representation."""
         return (
-            f"LeJEPALossWrapper(\n"
-            f"  optimizer={self.optimizer.__class__.__name__},\n"
-            f"  initial_lr={self.initial_lr:.2e},\n"
-            f"  final_lr={self.final_lr:.2e},\n"
-            f"  current_lr={self._get_lr():.2e},\n"
-            f"  warmup_steps={self.warmup_steps},\n"
-            f"  total_steps={self.total_steps},\n"
-            f"  univariate_test='{self.univariate_test_name}',\n"
-            f"  num_slices={self.num_slices},\n"
-            f"  step_count={self.step_count}\n"
-            f")"
+            f"{self.__class__.__name__}("
+            f"lr={self.initial_lr:.1e}, "
+            f"wd={self.optimizer.param_groups[0]['weight_decay']:.1e}, "
+            f"warmup={self.warmup_steps}, "
+            f"test={self.univariate_test_name}, "
+            f"step={self.step_count}/{self.total_steps})"
         )
