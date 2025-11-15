@@ -11,24 +11,10 @@ Tests cover:
 
 import pytest
 import torch
-import numpy as np
-from scipy import stats
 from lejepa.univariate import (
     CramerVonMises,
-    AndersonDarling,
-    ShapiroWilk,
     Watson,
 )
-import pytest
-import torch
-import numpy as np
-from scipy import stats
-from unittest.mock import Mock, patch
-import pytest
-import torch
-import numpy as np
-from scipy import stats
-from unittest.mock import Mock, patch
 
 
 class TestWatson:

@@ -117,6 +117,37 @@ loss = loss_fn(embeddings)
 loss.backward()
 ```
 
+## LeJEPA Adapter
+
+For plug-and-play integration, we provide a production-ready adapter that combines AdamW optimization with SIGReg loss. The adapter handles hyperparameters, learning rate scheduling, and statistical test selection automatically.
+
+**Quick Example:**
+```python
+from adapter import LeJEPAAdapter
+
+# Initialize with your model
+adapter = LeJEPAAdapter(
+    model=your_model,
+    lr=5e-4,
+    weight_decay=5e-2,  # Use 5e-4 for ResNets
+    statistical_test='epps_pulley'
+)
+
+# Training loop
+for batch in dataloader:
+    loss = adapter.compute_loss(batch, your_model)
+    adapter.zero_grad()
+    loss.backward()
+    adapter.step()
+```
+
+**Features:**
+- Pre-configured for Vision Transformers and ResNets
+- Automatic cosine annealing with warmup
+- Choice of statistical tests (Epps-Pulley, Anderson-Darling, Cramér-von Mises, BHEP)
+- Built-in learning rate and loss tracking
+
+See `adapter/README.md` for detailed documentation and `adapter/benchmark_lejepa_adapter.py` for performance comparisons.
 
 ## Citation
 If you use LeJEPA in your research, please cite:
@@ -136,4 +167,3 @@ If you use LeJEPA in your research, please cite:
 ## Contact & Contributions
 We welcome issues, feature requests, and pull requests!
 For questions or collaborations, please contact rbalestr@brown.edu
-

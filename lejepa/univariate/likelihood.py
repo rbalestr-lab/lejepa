@@ -3,33 +3,6 @@ import torch
 from .utils import log_norm_cdf
 from .base import UnivariateTest
 
-# class NLL(torch.nn.Module):
-#     def __init__(self, eps: float = 1e-5):
-#         super().__init__()
-#         self.eps = eps
-#         self.g = torch.distributions.Normal(0, 1)
-
-#     def forward(self, x):
-#         s = torch.sort(x, dim=0)[0]
-#         N = x.size(0)
-#         dev = x.device
-#         with torch.no_grad():
-#             _k = torch.arange(1, N + 1, device=dev, dtype=torch.float)
-#             bottom1 = torch.arange(0, N, device=x.device, dtype=torch.float).log_()
-#             bottom1[0] = 0
-#             torch.cumsum(bottom1, dim=0, out=bottom1)
-#             _k_m_one = _k.div_(N) - 1 / x.size(0)
-#             _N_m_k = 1 - _k
-#         Fu = self.g.cdf(s)
-#         one_m_Fu = (1 - Fu).clip_(self.eps)
-#         Fu.clip_(self.eps)
-#         stat = -(
-#             +Fu.log_().torch.matmul(_k_m_one)
-#             + one_m_Fu.log_().torch.matmul(_N_m_k)
-#             + self.g.log_prob(s).mean(0)
-#         )
-#         return stat
-
 
 class NLL(UnivariateTest):
     def __init__(self, alpha: float = 0.5, k: int = None, N: int = None):

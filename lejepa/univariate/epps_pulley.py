@@ -1,16 +1,6 @@
 import torch
 from .base import UnivariateTest
-from torch import distributed as dist
-from torch.distributed.nn import all_reduce as functional_all_reduce
-from torch.distributed.nn import ReduceOp
-
-
-def all_reduce(x, op="AVG"):
-    if dist.is_available() and dist.is_initialized():
-        op = ReduceOp.__dict__[op.upper()]
-        return functional_all_reduce(x, op)
-    else:
-        return x
+from ..utils import all_reduce
 
 
 class EppsPulley(UnivariateTest):
@@ -36,6 +26,14 @@ class EppsPulley(UnivariateTest):
         integration (str, optional): Integration method to use. One of:
             - 'trapezoid': Trapezoidal rule with linear spacing over [0, t_max]
             Default: 'trapezoid'.
+
+    Performance Note:
+        This test uses trigonometric operations on all data points at each integration
+        node, resulting in O(N × D × n_points) complexity where N is number of samples,
+        D is dimensionality, and n_points is the number of integration points (default: 17).
+        The trigonometric operations are required by the mathematical definition of the
+        characteristic function and cannot be simplified. For large datasets, consider
+        reducing n_points or using other tests.
 
     Attributes:
         t (torch.Tensor): Integration points (positive half, including 0).
@@ -97,156 +95,3 @@ class EppsPulley(UnivariateTest):
 
         # Weighted integration
         return (err @ self.weights) * N * self.world_size
-
-
-class EppsPulley(UnivariateTest):
-    """
-    PyTorch implementation of the Epps-Pulley test for univariate normality
-    based on empirical characteristic function.
-    """
-
-    def __init__(self, t_range=(-3, 3), n_points=10, weight_type="gaussian"):
-        """
-        Parameters:
-        -----------
-        t_range : tuple
-            Range of t values for integration
-        n_points : int
-            Number of points for numerical integration
-        weight_type : str
-            Type of weight function ('gaussian' or 'uniform')
-        """
-        super().__init__()
-        self.t_range = t_range
-        self.n_points = n_points
-        self.weight_type = weight_type
-
-    def empirical_cf(self, x, t):
-        """
-        Compute empirical characteristic function φ̂(t) = (1/n)∑ e^(itX_j)
-
-        Parameters:
-        -----------
-        x : torch.Tensor, shape (n,)
-            Sample data
-        t : torch.Tensor, shape (m,)
-            Points where to evaluate CF
-
-        Returns:
-        --------
-        torch.Tensor, shape (m,)
-            Empirical characteristic function values
-        """
-        # Reshape for broadcasting: x (n,1), t (1,m)
-        x_expanded = x.unsqueeze(1)  # (n, 1, *)
-        t_expanded = t.unsqueeze(0)  # (1, m)
-        extra_dims = x.ndim - 1
-        for _ in range(extra_dims):
-            t_expanded = t_expanded.unsqueeze(-1)
-
-        # Compute e^(itX_j) for all i,j
-        # Real part: cos(tX), Imaginary part: sin(tX)
-        real_part = torch.cos(t_expanded * x_expanded)  # (n, m, *)
-        imag_part = torch.sin(t_expanded * x_expanded)  # (n, m, *)
-
-        # Average over samples
-        # TODO: handle DDP here for gather_all
-        empirical_real = torch.mean(real_part, dim=0)  # (m, *)
-        empirical_imag = torch.mean(imag_part, dim=0)  # (m, *)
-
-        return torch.complex(empirical_real.float(), empirical_imag.float())
-
-    def normal_cf(self, t, mu, sigma):
-        """
-        Theoretical characteristic function for normal distribution
-        φ_N(t) = exp(iμt - σ²t²/2)
-
-        Parameters:
-        -----------
-        t : torch.Tensor
-            Points where to evaluate CF
-        mu : float
-            Mean parameter
-        sigma : float
-            Standard deviation parameter
-
-        Returns:
-        --------
-        torch.Tensor
-            Normal characteristic function values
-        """
-        # exp(iμt - σ²t²/2) = exp(-σ²t²/2) * exp(iμt)
-        magnitude = torch.exp(-0.5 * sigma**2 * t**2)
-        phase = mu * t
-
-        real_part = magnitude * torch.cos(phase)
-        imag_part = magnitude * torch.sin(phase)
-
-        return torch.complex(real_part.float(), imag_part.float())
-
-    def weight_function(self, t):
-        """
-        Weight function for integration
-
-        Parameters:
-        -----------
-        t : torch.Tensor
-            Points where to evaluate weight
-
-        Returns:
-        --------
-        torch.Tensor
-            Weight values
-        """
-        if self.weight_type == "gaussian":
-            return torch.exp(-(t**2) / 2)
-        elif self.weight_type == "uniform":
-            return torch.ones_like(t)
-        else:
-            raise ValueError(f"Unknown weight type: {self.weight_type}")
-
-    def forward(self, x):
-        """
-        Compute Epps-Pulley test statistic
-
-        Parameters:
-        -----------
-        x : torch.Tensor, shape (n,)
-            Sample data
-
-        Returns:
-        --------
-        float
-            Test statistic value
-        """
-        device = x.device
-
-        with torch.no_grad():
-            # Create integration points
-            t_min, t_max = self.t_range
-            t = torch.linspace(t_min, t_max, self.n_points, device=device)
-
-            # Compute theoretical characteristic functions
-            phi_normal = self.normal_cf(t, mu=0.0, sigma=1.0)  # Standard normal
-            # Get weight function
-            weights = self.weight_function(t)
-            # unsqueeze
-            for _ in range(x.ndim - 1):
-                phi_normal = phi_normal.unsqueeze(-1)
-                weights = weights.unsqueeze(-1)
-
-        # Compute empirical characteristic functions
-        phi_emp = self.empirical_cf(x, t)
-
-        # Compute squared difference
-        diff = phi_emp - phi_normal
-        squared_diff = torch.real(diff * torch.conj(diff))  # |φ̂ - φ_N|²
-
-        # Apply weight function and integrate (trapezoidal rule)
-        integrand = squared_diff * weights
-        integral = torch.trapz(integrand, t, dim=0)
-
-        # Test statistic (without n* scaling)
-        test_stat = integral
-
-        return test_stat

@@ -1,12 +1,11 @@
 import numpy as np
 from .bhep import BHEP
-import numpy as np
 import torch
 from typing import Union
-from .base import MultivariatetTest
+from .base import MultivariateTest
 
 
-class HZ(MultivariatetTest):
+class HZ(MultivariateTest):
     """
     Henze-Zirkler (HZ) test for multivariate normality.
 
@@ -36,14 +35,11 @@ class HZ(MultivariatetTest):
 
     Attributes
     ----------
-    dim : int
-        The expected dimensionality of input data.
+    None - dimensionality is automatically determined from input data shape.
 
     Parameters
     ----------
-    dim : int
-        Dimensionality of the multivariate data. Must be a positive integer.
-        This is the number of features/variables in your dataset.
+    None - the HZ test requires no configuration parameters.
 
     Properties
     ----------
@@ -52,6 +48,12 @@ class HZ(MultivariatetTest):
     - **Affine invariant**: Invariant under affine transformations of the data
     - **Powerful**: Generally more powerful than other normality tests for
       moderate to high dimensions
+
+    Performance Note
+    ----------------
+    This test has O(N²) computational complexity where N is the number of samples.
+    For large datasets (N > 1000), consider using slicing-based tests instead,
+    or subsample your data.
 
     When to Use
     -----------
@@ -71,13 +73,13 @@ class HZ(MultivariatetTest):
     Basic usage with normally distributed data:
 
     >>> import torch
-    >>> from your_module import HZ
+    >>> from lejepa.multivariate import HZ
     >>>
     >>> # Generate multivariate normal data
     >>> data = torch.randn(100, 5)  # 100 samples, 5 dimensions
     >>>
-    >>> # Initialize test
-    >>> hz_test = HZ(dim=5)
+    >>> # Initialize test (no parameters needed)
+    >>> hz_test = HZ()
     >>>
     >>> # Compute test statistic
     >>> statistic = hz_test(data)
@@ -94,7 +96,7 @@ class HZ(MultivariatetTest):
 
     >>> import numpy as np
     >>> data_np = np.random.randn(200, 3)
-    >>> hz_test = HZ(dim=3)
+    >>> hz_test = HZ()
     >>> statistic = hz_test(data_np)
 
     References
@@ -134,8 +136,7 @@ class HZ(MultivariatetTest):
 
     def _compute_bhep_statistic(self, x: torch.Tensor, beta: float) -> torch.Tensor:
         """Compute BHEP statistic with given bandwidth."""
-        self._bhep.beta = beta  # Update bandwidth
-        return self._bhep.forward(x)
+        return self._bhep.forward(x, beta=beta)
 
     @staticmethod
     def compute_bandwidth(n_samples: int, n_dims: int) -> float:

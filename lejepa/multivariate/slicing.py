@@ -1,15 +1,5 @@
 import torch
-from torch import distributed as dist
-from torch.distributed._functional_collectives import (
-    all_reduce as functional_all_reduce,
-)
-
-
-def all_reduce(x, op="AVG"):
-    if dist.is_available() and dist.is_initialized():
-        return functional_all_reduce(x, op.lower(), dist.group.WORLD)
-    else:
-        return x
+from ..utils import all_reduce
 
 
 class SlicingUnivariateTest(torch.nn.Module):
@@ -40,6 +30,14 @@ class SlicingUnivariateTest(torch.nn.Module):
         clip_value (float, optional): Minimum threshold for test statistics. Values
             below this threshold are clipped to zero. Useful for reducing noise from
             negligible deviations. Default: None (no clipping).
+
+    Performance Note:
+        This test has O(N × D × num_slices) complexity where N is the number of samples,
+        D is dimensionality, and num_slices is the number of projections. This is much
+        more efficient than energy-based tests (O(N²)) for large N. Consider using this
+        over BHEP/COMB/HV/HZ for datasets with N > 1000. The num_slices parameter
+        (default: 100) controls the trade-off between accuracy and computation time.
+
     Attributes:
         global_step (torch.Tensor): Counter for deterministic random seed generation,
             synchronized across distributed processes to ensure consistent projections.

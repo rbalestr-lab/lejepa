@@ -13,14 +13,7 @@ Run with:
 import pytest
 import torch
 import numpy as np
-
-# Assuming your test classes are in a module called 'tests'
-# Adjust the import path according to your project structure
-
 from lejepa.multivariate import BHEP
-import pytest
-import numpy as np
-import torch
 
 # Mark all tests in this module as unit tests
 pytestmark = pytest.mark.unit

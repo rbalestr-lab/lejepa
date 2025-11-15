@@ -1,11 +1,10 @@
 import numpy as np
 import torch
-from .base import MultivariatetTest
-import torch
+from .base import MultivariateTest
 from typing import Union
 
 
-class COMB(MultivariatetTest):
+class COMB(MultivariateTest):
     """
     Combination-based (COMB) test statistic for multivariate normality.
 
@@ -17,6 +16,11 @@ class COMB(MultivariatetTest):
         dim: Dimensionality of the input data
         gamma: Bandwidth parameter for the kernel (must be > 0)
                Controls the sensitivity of the test
+
+    Performance Note:
+        This test has O(N²) computational complexity where N is the number of samples.
+        For large datasets (N > 1000), consider using slicing-based tests instead,
+        or subsample your data.
 
     Reference:
         [Add citation/paper reference here]
@@ -83,4 +87,4 @@ class COMB(MultivariatetTest):
         return statistic
 
     def __repr__(self) -> str:
-        return f"COMB(dim={self.dim}, gamma={self.gamma})"
+        return f"COMB(gamma={self.gamma})"

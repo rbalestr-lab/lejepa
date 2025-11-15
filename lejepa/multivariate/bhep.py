@@ -1,10 +1,10 @@
 import numpy as np
 import torch
-from .base import MultivariatetTest
+from .base import MultivariateTest
 from typing import Union
 
 
-class BHEP(MultivariatetTest):
+class BHEP(MultivariateTest):
     """
     Beta-Henze Energy-based Projection (BHEP) test statistic.
 
@@ -16,8 +16,14 @@ class BHEP(MultivariatetTest):
         beta: Bandwidth parameter for the Gaussian kernel (must be > 0)
               Smaller values make the test more sensitive to local deviations
 
+    Performance Note:
+        This test has O(N²) computational complexity where N is the number of samples.
+        For large datasets (N > 1000), consider using slicing-based tests instead,
+        or subsample your data.
+
     Reference:
-        [Add citation if applicable]
+        Henze, N., & Wagner, T. (1997). A new approach to the BHEP tests for
+        multivariate normality. Journal of Multivariate Analysis, 62(1), 1-23.
     """
 
     def __init__(self, beta: float = 0.1):
@@ -28,16 +34,21 @@ class BHEP(MultivariatetTest):
 
         self.beta = beta
 
-    def forward(self, x: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
+    def forward(
+        self, x: Union[torch.Tensor, np.ndarray], beta: float = None
+    ) -> torch.Tensor:
         """
         Compute BHEP test statistic.
 
         Args:
             x: Input data of shape (N, D) where N is number of samples
                and D is dimensionality
+            beta: Optional bandwidth parameter. If provided, overrides self.beta
+                for this forward pass only.
 
         Returns:
-            BHEP test statistic (scalar tensor)
+            BHEP test statistic as scalar tensor. Lower values indicate
+            better fit to multivariate normal distribution.
 
         Raises:
             ValueError: If input data is empty or malformed
@@ -45,12 +56,15 @@ class BHEP(MultivariatetTest):
         x = self.prepare_data(x)
         N, D = x.shape
 
+        # Use provided beta or fall back to instance beta
+        beta_val = beta if beta is not None else self.beta
+
         # Validate input
         if N == 0:
             raise ValueError("Input data cannot be empty")
 
         # Precompute constants
-        beta_squared = self.beta**2
+        beta_squared = beta_val**2
 
         # Compute squared norms: ||x_i||^2
         squared_norms = x.square().sum(dim=1)  # Shape: (N,)
@@ -58,7 +72,9 @@ class BHEP(MultivariatetTest):
         # Compute pairwise squared distances: ||x_i - x_j||^2
         # Using: ||x_i - x_j||^2 = ||x_i||^2 + ||x_j||^2 - 2 x_i^T x_j
         pairwise_distances = (
-            -2 * x @ x.T + squared_norms.unsqueeze(1) + squared_norms.unsqueeze(0)
+            -2 * x @ x.T 
+            + squared_norms.unsqueeze(1) 
+            + squared_norms.unsqueeze(0)
         )
 
         # Left-hand side: (1/N^2) * sum_{i,j} exp(-beta^2/2 * ||x_i - x_j||^2)

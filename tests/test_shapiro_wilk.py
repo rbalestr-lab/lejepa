@@ -11,19 +11,8 @@ Tests cover:
 
 import pytest
 import torch
-import numpy as np
-from scipy import stats
-from lejepa.univariate import (
-    CramerVonMises,
-    AndersonDarling,
-    ShapiroWilk,
-    ExtendedJarqueBera,
-)
-import pytest
-import torch
-import numpy as np
-from scipy import stats
-from unittest.mock import Mock, patch
+from lejepa.univariate import ShapiroWilk
+from unittest.mock import patch
 
 
 class TestShapiroWilk:

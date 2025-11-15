@@ -13,14 +13,7 @@ Run with:
 import pytest
 import torch
 import numpy as np
-
-# Assuming your test classes are in a module called 'tests'
-# Adjust the import path according to your project structure
-
 from lejepa.multivariate import HZ
-import pytest
-import numpy as np
-import torch
 import warnings
 
 # Mark all tests in this module as unit tests

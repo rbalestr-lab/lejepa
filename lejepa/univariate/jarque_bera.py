@@ -1,21 +1,46 @@
-import torch
 from .base import UnivariateTest
 
 
 class VCReg(UnivariateTest):
+    """
+    VCReg (Variance-Covariance Regularization) test for standard normality N(0,1).
+
+    This test checks only the first two moments (mean=0, var=1) to determine
+    if data follows a standard normal distribution. Unlike the full Jarque-Bera
+    test which includes skewness and kurtosis, VCReg focuses solely on location
+    and scale parameters.
+
+    The test statistic is the sum of two components:
+        VCReg = S_mean + S_var
+
+    where:
+        - S_mean = n·μ̂² / σ̂² tests H₀: μ = 0
+        - S_var = (n-1)·(σ̂² - 1)² / 2 tests H₀: σ² = 1
+
+    Under H₀: X ~ N(0,1), the statistic follows approximately χ²(2).
+
+    Returns
+    -------
+    torch.Tensor
+        Test statistic (scalar or shape matching input features). Higher values
+        indicate stronger evidence against N(0,1).
+
+    Notes
+    -----
+    This is a simplified normality test that does NOT check skewness or kurtosis.
+    For a complete four-moment test, use ExtendedJarqueBera instead.
+    """
 
     def forward(self, x):
         """
-        Computes an extended Jarque-Bera test statistic and p-value for normality,
-        testing all four moments (mean=0, var=1, skew=0, kurt=3) along the first dimension.
+        Compute VCReg test statistic for mean and variance components only.
 
         Args:
             x (torch.Tensor): Tensor of shape (N, ...), where the test is performed over dim=0.
 
         Returns:
-            stat (torch.Tensor): Extended test statistic, shape (...).
-            p_value (torch.Tensor): p-value for the test statistic, shape (...).
-            moments (dict): Dictionary with mean, var, skewness, kurtosis tensors.
+            torch.Tensor: Test statistic, shape (...). Under H₀: X ~ N(0,1), 
+                         follows approximately χ²(2) distribution.
         """
         n = x.shape[0]
         mean = x.mean(dim=0)

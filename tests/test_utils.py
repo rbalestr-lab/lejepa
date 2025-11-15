@@ -2,7 +2,6 @@ import pytest
 import torch
 import numpy as np
 from scipy import stats
-from typing import Callable
 from lejepa.univariate.utils import log_norm_cdf, log_norm_cdf_helper, norm_cdf
 
 

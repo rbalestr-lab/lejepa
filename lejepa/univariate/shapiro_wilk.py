@@ -1,6 +1,5 @@
 import torch
 from .base import UnivariateTest
-import numpy as np
 
 
 class ShapiroWilk(UnivariateTest):

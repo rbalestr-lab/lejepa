@@ -3,7 +3,7 @@ from typing import Union, Iterable
 import numpy as np
 
 
-class MultivariatetTest(torch.nn.Module):
+class MultivariateTest(torch.nn.Module):
 
     def prepare_data(self, x):
         # Convert numpy to torch if needed
