@@ -144,7 +144,7 @@ for batch in dataloader:
 **Features:**
 - Pre-configured for Vision Transformers and ResNets
 - Automatic cosine annealing with warmup
-- Choice of statistical tests (Epps-Pulley, Anderson-Darling, Cramér-von Mises, BHEP)
+- Choice of statistical tests (Epps-Pulley, Anderson-Darling, Cramér-von Mises, BHEP, + more)
 - Built-in learning rate and loss tracking
 
 See `adapter/README.md` for detailed documentation and `adapter/benchmark_lejepa_adapter.py` for performance comparisons.
