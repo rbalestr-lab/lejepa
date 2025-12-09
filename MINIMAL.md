@@ -186,7 +186,7 @@ def main(cfg: DictConfig):
                     "train/probe": probe_loss.item(),
                     "train/lejepa": lejepa_loss.item(),
                     "train/sigreg": sigreg_loss.item(),
-                    "train/inv": sigreg_loss.item(),
+                    "train/inv": inv_loss.item(),
                 }
             )
 
