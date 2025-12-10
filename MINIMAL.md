@@ -11,9 +11,10 @@ This page explains a minimal implementation of [**LeJEPA**](https://arxiv.org/ab
 - online linear probing
 - SOTA top1 accuracy
 
-Before reading more, make sure you have the minimal dependencies installed 
+Before reading more, make sure you have the minimal dependencies installed. 
 ```bash
-pip install torch torchvision timm wandb hydra-core datasets huggingface-hub
+# Imagenette dataset requires datasets<=3.6.0
+pip install torch torchvision timm wandb hydra-core "datasets<=3.6.0" huggingface-hub
 ```
 ## Table of Contents
 1. [Why LeJEPA?](#why-lejepa)
