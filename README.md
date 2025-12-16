@@ -105,7 +105,7 @@ LeJEPA provides a variety of univariate and multivariate statistical tests for r
 import lejepa
 
 # Choose a univariate test (Epps-Pulley in this example)
-univariate_test = lejepa.univariate.EppsPulley(num_points=17)
+univariate_test = lejepa.univariate.EppsPulley(n_points=17)
 
 # Create the multivariate slicing test
 loss_fn = lejepa.multivariate.SlicingUnivariateTest(
